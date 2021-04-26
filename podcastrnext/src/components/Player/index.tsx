@@ -13,6 +13,7 @@ import { convertDurationToTimeString } from '../../utils/convertDurationToTimeSt
 export function Player(){
     const audioRef = useRef<HTMLAudioElement>(null);
     const [progress, setProgress] = useState(0);
+    const [volume, setVolume] = useState(20);
 
     const {
         episodeList, 
@@ -45,6 +46,13 @@ export function Player(){
 
     }, [isPlaying])
 
+    useEffect(() => {
+        if (!audioRef.current){
+            return;
+        }
+        audioRef.current.volume = volume
+    },[])
+
     function setupProgressListener(){
         audioRef.current.currentTime = 0;
         audioRef.current.addEventListener('timeupdate', () => {
@@ -55,6 +63,11 @@ export function Player(){
     function handleSeek(amount: number){
         audioRef.current.currentTime = amount;
         setProgress(amount);
+    }
+    
+    function handleSeekVolume(amount: number){
+        audioRef.current.volume = amount/100;
+        setVolume(amount);
     }
 
     function handleEpisodeEnded(){
@@ -95,23 +108,42 @@ export function Player(){
 
 
             <footer className={!episode ? styles.empty : ""}>
-                <div className={styles.progress}>
-                    <span>{convertDurationToTimeString(progress)}</span>
-                    <div className={styles.slider}>
+                <div className={styles.progressAndVolume}>
+                    <div className={styles.progress}>
+
+                        <span>{convertDurationToTimeString(progress)}</span>
+                        <div className={styles.slider}>
+                            {episode ? (
+                                <Slider 
+                                    max={episode.duration}
+                                    value={progress}
+                                    onChange={handleSeek}
+                                    trackStyle={{ backgroundColor: '#04d361'}}
+                                    railStyle={{ backgroundColor: '#9f75ff'}}
+                                    handleStyle={{ borderColor: '#04d361', borderWidth: 4 }}
+                                />
+                            ) : (
+                                <div className={styles.emptySlider}></div>
+                            )}
+                        </div>
+                        <span>{convertDurationToTimeString(episode?.duration ?? 0)}</span>
+                    </div>
+                    <div className={styles.volumeSlider}>
                         {episode ? (
-                            <Slider 
-                                max={episode.duration}
-                                value={progress}
-                                onChange={handleSeek}
+                                <Slider 
+                                max={100}
+                                value={volume}
+                                onChange={handleSeekVolume}
+                                vertical= {true}
                                 trackStyle={{ backgroundColor: '#04d361'}}
                                 railStyle={{ backgroundColor: '#9f75ff'}}
                                 handleStyle={{ borderColor: '#04d361', borderWidth: 4 }}
-                            />
-                        ) : (
+                                />
+                            ) : (
                             <div className={styles.emptySlider}></div>
                         )}
+                        
                     </div>
-                    <span>{convertDurationToTimeString(episode?.duration ?? 0)}</span>
                 </div>
 
                 { episode && (
